@@ -8,13 +8,16 @@ class App extends React.Component {
 
     this.handleChangePrinciple = this.handleChangePrinciple.bind(this)
     this.handleChangeInterest = this.handleChangeInterest.bind(this)
-    this.handleChangeInstallment = this.handleChangeInstallment.bind(this)
+    this.HandleMonth = this.HandleMonth.bind(this)
+    this.HandleAge = this.HandleAge.bind(this)
     this.submitForm = this.submitForm.bind(this)
 
     this.state = {
       principle: 0,
-      interest: 0.00,
-      number_installment: 0,
+      interest: 5.99,
+      month: 0,
+      day: 30,
+      age: 0,
       table: []
     }
   }
@@ -27,31 +30,68 @@ class App extends React.Component {
     this.setState({ interest: parseFloat(e.target.value) || 0.00 })
   }
 
-  handleChangeInstallment(e){
-    let age = (60 - parseInt(e.target.value)) * 12
-    this.setState({ number_installment: age || 0 })
+  HandleAge(e){
+    let ages = (60 - parseInt(e.target.value)) * 12
+    this.setState({ age: ages || 0 })
+  }
+
+  HandleMonth (event) {
+    this.setState({month: parseInt(event.target.value)|| 0})
   }
 
   submitForm(event){
     event.preventDefault()
-    var table = this.state.table
-    var resentprinciple = this.state.principle
-    for (var i = 0; i <= this.state.number_installment ; i++){
-      var interestformonth = (resentprinciple * (this.state.interest/100) * 30) / 365
-      var moneyfirst = interestformonth * (this.state.interest / 100) + interestformonth
-      resentprinciple = resentprinciple - moneyfirst
-      var total = interestformonth + moneyfirst
-      var tablepush = {
-        total: total,
-        interestformonth : interestformonth,
-        moneyfirst: moneyfirst,
-        resentprinciple: resentprinciple
-      }
-      table.push(tablepush)
-      this.setState({ table: table })
+    if(this.state.age < this.state.month && this.state.age > 0){
+        alert("จำนวณการผ่อนชำระเกินอายุ 60 ไม่สามารถทำการกู้ได้")
+        window.location.reload();
     }
+    else if(this.state.age <= 0) {
+        alert("คุณมีอายุครบหรือเกิน 60 ปี ไม่สามารถทำการกู้ได้")
+        window.location.reload();
+    }
+    var tables = this.state.table
+    var money = this.state.principle
+    var interest = (this.state.interest /100) /12
+    var month = this.state.month
+    var pmt = this.PMT(interest,month,money)
+    pmt = Math.abs(pmt)
+    for (var i = 0; i <= this.state.month ; i++){
+      var sumInterest = (money * (this.state.interest/100) * 30) / 365
+      var sumPrinciple = pmt - sumInterest
+      if(money <= sumPrinciple) {
+        pmt = money + sumInterest
+        sumPrinciple = money
+        money = 0
+      } else {
+        money = money - sumPrinciple
+      }
+      var tablepush = {
+        pmt: pmt,
+        CalInterest : sumInterest,
+        CalPrinciple: sumPrinciple,
+        money: money
+      }
+      tables.push(tablepush)
+    }
+    this.setState({ table: tables })
     console.log(this.state.table)
   }
+
+  PMT (rate, nper, pv, fv, type) {
+		if (!fv) fv = 0;
+		if (!type) type = 0;
+
+		if (rate === 0) return -(pv + fv)/nper;
+		
+		var pvif = Math.pow(1 + rate, nper);
+		var pmt = rate / (pvif - 1) * -(pv * pvif + fv);
+
+		if (type === 1) {
+			pmt /= (1 + rate);
+		};
+
+		return pmt;
+	}
 
   render() {
     return (
@@ -68,15 +108,19 @@ class App extends React.Component {
                 <input type="number" className="form-control" value={this.state.interest} onChange={this.handleChangeInterest}/>
             </div>
             <div className="form-group">
+                <label>ผ่อนชำระ (งวด) :</label>
+                <input type="text" className="form-control" value={this.state.month} onChange={this.HandleMonth}/>
+            </div>
+            <div className="form-group">
                 <label>อายุผู้กู้</label>
-                <input type="number" className="form-control" onChange={this.handleChangeInstallment}/>
+                <input type="number" className="form-control" onChange={this.HandleAge}/>
             </div>
             <button type="submit" className="btn btn-primary">Submit</button>
           </form>
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">#</th>
+                <th scope="col">งวดที่</th>
                 <th scope="col">จำนวนผ่อนชำระต่องวด</th>
                 <th scope="col">ชำระดอกเบี้ย</th>
                 <th scope="col">ชำระเงินต้น</th>
@@ -87,10 +131,10 @@ class App extends React.Component {
             {this.state.table.map((tables, index) =>
               <tr>
                 <th scope="row">{index+1}</th>
-                <td>{tables.total.toFixed(2)}</td>
-                <td>{tables.interestformonth.toFixed(2)}</td>
-                <td>{tables.moneyfirst.toFixed(2)}</td>
-                <td>{tables.resentprinciple.toFixed(2)}</td>
+                <td>{tables.pmt.toFixed(2)}</td>
+                <td>{tables.CalInterest.toFixed(2)}</td>
+                <td>{tables.CalPrinciple.toFixed(2)}</td>
+                <td>{tables.money.toFixed(2)}</td>
               </tr>
             )}
             </tbody>
