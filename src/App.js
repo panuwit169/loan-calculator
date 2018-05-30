@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
+import React from 'react';
+import classnames from 'classnames';
 import './App.css';
 
 class App extends React.Component {
@@ -18,12 +18,13 @@ class App extends React.Component {
       month: 0,
       day: 30,
       age: 0,
-      table: []
+      table: [],
+      active: false
     }
   }
 
   handleChangePrinciple(e) {
-      this.setState({ principle: parseInt(e.target.value) || 0 })
+    this.setState({ principle: parseInt(e.target.value) || 0 })
   }
 
   handleChangeInterest(e) {
@@ -36,11 +37,12 @@ class App extends React.Component {
   }
 
   HandleMonth (event) {
-    this.setState({month: parseInt(event.target.value)|| 0})
+    this.setState({month: parseInt(event.target.value) || 0})
   }
 
   submitForm(event){
     event.preventDefault()
+    this.setState({active: true})
     if(this.state.age < this.state.month && this.state.age > 0){
         alert("จำนวณการผ่อนชำระเกินอายุ 60 ไม่สามารถทำการกู้ได้")
         window.location.reload();
@@ -49,6 +51,7 @@ class App extends React.Component {
         alert("คุณมีอายุครบหรือเกิน 60 ปี ไม่สามารถทำการกู้ได้")
         window.location.reload();
     }
+    this.state.table = []
     var tables = this.state.table
     var money = this.state.principle
     var interest = (this.state.interest /100) /12
@@ -91,17 +94,23 @@ class App extends React.Component {
 		};
 
 		return pmt;
-	}
+  }
+  
+  numberWithCommas(x){
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  
 
   render() {
+    let classes = classnames('table table-bordered', {active: this.state.active});
     return (
       <div className="App">
-        <center><h1>คำนวนเงินกู้</h1></center>
+        <center><h1>คำนวณเงินกู้</h1></center>
         <div className="container">
           <form onSubmit={this.submitForm}>
             <div className="form-group">
                 <label>จำนวนเงินที่ต้องการกู้ (บาท)</label>
-                <input type="number" className="form-control" value={this.state.principle} onChange={this.handleChangePrinciple}/>
+                <input type="text" className="form-control" value={this.state.principle} onChange={this.handleChangePrinciple}/>
             </div>
             <div className="form-group">
                 <label>อัตราดอกเบี้ยเงินกู้ต่อปี (%)</label>
@@ -115,9 +124,9 @@ class App extends React.Component {
                 <label>อายุผู้กู้</label>
                 <input type="number" className="form-control" onChange={this.HandleAge}/>
             </div>
-            <button type="submit" className="btn btn-primary">Submit</button>
-          </form>
-          <table className="table">
+            <button type="submit" className="btn btn-primary">คำนวณ</button>
+          </form><br />
+          <table className={classes}>
             <thead>
               <tr>
                 <th scope="col">งวดที่</th>
@@ -131,10 +140,10 @@ class App extends React.Component {
             {this.state.table.map((tables, index) =>
               <tr>
                 <th scope="row">{index+1}</th>
-                <td>{tables.pmt.toFixed(2)}</td>
-                <td>{tables.CalInterest.toFixed(2)}</td>
-                <td>{tables.CalPrinciple.toFixed(2)}</td>
-                <td>{tables.money.toFixed(2)}</td>
+                <td className="text-right">{this.numberWithCommas(tables.pmt.toFixed(2))}</td>
+                <td className="text-right">{this.numberWithCommas(tables.CalInterest.toFixed(2))}</td>
+                <td className="text-right">{this.numberWithCommas(tables.CalPrinciple.toFixed(2))}</td>
+                <td className="text-right">{this.numberWithCommas(tables.money.toFixed(2))}</td>
               </tr>
             )}
             </tbody>
